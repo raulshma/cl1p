@@ -1,0 +1,73 @@
+# syntax=docker/dockerfile:1.7
+
+FROM node:22-alpine AS base
+WORKDIR /app
+ENV NODE_ENV=production
+RUN corepack enable
+
+FROM base AS deps
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
+
+FROM base AS builder
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+ARG NEXT_PUBLIC_APP_NAME
+ARG NEXT_PUBLIC_APP_URL
+ARG NEXT_PUBLIC_ENABLE_ANALYTICS
+ARG NEXT_PUBLIC_ENABLE_ERROR_TRACKING
+ARG NEXT_PUBLIC_MAX_PEER_CONNECTIONS
+ARG NEXT_PUBLIC_PEER_CONNECTION_TIMEOUT
+ARG NEXT_PUBLIC_MAX_FILE_SIZE
+ARG NEXT_PUBLIC_CHUNK_SIZE
+ARG NEXT_PUBLIC_CLIPBOARD_SYNC_INTERVAL
+ARG NEXT_PUBLIC_MAX_CLIPBOARD_SIZE
+ARG NEXT_PUBLIC_GA_ID
+ARG NEXT_PUBLIC_POSTHOG_KEY
+
+ENV NEXT_PUBLIC_APP_NAME=${NEXT_PUBLIC_APP_NAME}
+ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
+ENV NEXT_PUBLIC_ENABLE_ANALYTICS=${NEXT_PUBLIC_ENABLE_ANALYTICS}
+ENV NEXT_PUBLIC_ENABLE_ERROR_TRACKING=${NEXT_PUBLIC_ENABLE_ERROR_TRACKING}
+ENV NEXT_PUBLIC_MAX_PEER_CONNECTIONS=${NEXT_PUBLIC_MAX_PEER_CONNECTIONS}
+ENV NEXT_PUBLIC_PEER_CONNECTION_TIMEOUT=${NEXT_PUBLIC_PEER_CONNECTION_TIMEOUT}
+ENV NEXT_PUBLIC_MAX_FILE_SIZE=${NEXT_PUBLIC_MAX_FILE_SIZE}
+ENV NEXT_PUBLIC_CHUNK_SIZE=${NEXT_PUBLIC_CHUNK_SIZE}
+ENV NEXT_PUBLIC_CLIPBOARD_SYNC_INTERVAL=${NEXT_PUBLIC_CLIPBOARD_SYNC_INTERVAL}
+ENV NEXT_PUBLIC_MAX_CLIPBOARD_SIZE=${NEXT_PUBLIC_MAX_CLIPBOARD_SIZE}
+ENV NEXT_PUBLIC_GA_ID=${NEXT_PUBLIC_GA_ID}
+ENV NEXT_PUBLIC_POSTHOG_KEY=${NEXT_PUBLIC_POSTHOG_KEY}
+
+ARG HOST_IP
+ENV HOST_IP=${HOST_IP}
+
+RUN pnpm run build
+
+FROM node:22-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
+ENV NGINX_PORT=8080
+ENV UPSTREAM_PORT=3000
+ENV NGINX_CLIENT_MAX_BODY_SIZE=100m
+
+RUN apk add --no-cache nginx gettext su-exec openssl \
+	&& addgroup -S nodejs \
+	&& adduser -S nextjs -G nodejs
+
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+
+COPY docker/nginx.conf.template /etc/nginx/nginx.conf.template
+COPY docker/nginx.conf.ssl.template /etc/nginx/nginx.conf.ssl.template
+COPY docker/runtime-env.template.js /app/runtime-env.template.js
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+EXPOSE 8080 8443
+
+CMD ["/usr/local/bin/entrypoint.sh"]

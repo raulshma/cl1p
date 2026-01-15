@@ -1,0 +1,342 @@
+// Domain type definitions for Live Clipboard application
+// Enhanced with strict type checking and comprehensive interfaces
+
+// ============================================================================
+// CONNECTION TYPES
+// ============================================================================
+
+/**
+ * Represents the current state of a peer connection
+ */
+export type ConnectionState =
+  | 'disconnected'
+  | 'connecting'
+  | 'connected'
+  | 'reconnecting'
+  | 'failed';
+
+/**
+ * Type guard to check if connection is active
+ */
+export const isActiveConnection = (state: ConnectionState): boolean => {
+  return state === 'connected' || state === 'connecting' || state === 'reconnecting';
+};
+
+/**
+ * Type guard to check if connection is stable
+ */
+export const isStableConnection = (state: ConnectionState): boolean => {
+  return state === 'connected';
+};
+
+// ============================================================================
+// MESSAGE TYPES
+// ============================================================================
+
+/**
+ * Represents the type of message being sent
+ */
+export type MessageType = 'text' | 'file' | 'system';
+
+/**
+ * Base message interface
+ */
+export interface BaseMessage {
+  id: string;
+  type: MessageType;
+  peerId: string;
+  timestamp: Date;
+}
+
+/**
+ * Text message content
+ */
+export interface TextMessageContent {
+  type: 'text';
+  content: string;
+}
+
+/**
+ * File message content
+ */
+export interface FileMessageContent {
+  type: 'file';
+  file: FileTransfer;
+}
+
+/**
+ * System message content
+ */
+export interface SystemMessageContent {
+  type: 'system';
+  content: string;
+  severity?: 'info' | 'warning' | 'error';
+}
+
+/**
+ * Discriminated union for message content
+ */
+export type MessageContent = TextMessageContent | FileMessageContent | SystemMessageContent;
+
+/**
+ * Complete message interface with discriminated union
+ */
+export interface Message extends BaseMessage {
+  content: MessageContent;
+}
+
+/**
+ * Type guard for text messages
+ */
+export const isTextMessage = (message: Message): message is Message & TextMessageContent => {
+  return message.content.type === 'text';
+};
+
+/**
+ * Type guard for file messages
+ */
+export const isFileMessage = (message: Message): message is Message & FileMessageContent => {
+  return message.content.type === 'file';
+};
+
+/**
+ * Type guard for system messages
+ */
+export const isSystemMessage = (message: Message): message is Message & SystemMessageContent => {
+  return message.content.type === 'system';
+};
+
+// ============================================================================
+// FILE TRANSFER TYPES
+// ============================================================================
+
+/**
+ * Represents the status of a file transfer
+ */
+export type FileTransferStatus =
+  | 'pending'
+  | 'in-progress'
+  | 'completed'
+  | 'failed'
+  | 'cancelled';
+
+/**
+ * File chunk information for large file transfers
+ */
+export interface FileChunk {
+  index: number;
+  data: ArrayBuffer;
+  checksum?: string;
+}
+
+/**
+ * Import FileTransfer interface (will be defined below)
+ */
+export interface FileTransfer {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+  status: FileTransferStatus;
+  progress: number;
+  peerId: string;
+  data?: ArrayBuffer;
+  chunks?: FileChunk[];
+  metadata?: {
+    mimeType?: string;
+    checksum?: string;
+    lastModified?: Date;
+    isDirectory?: boolean;
+  };
+  error?: string;
+  startedAt?: Date;
+  completedAt?: Date;
+}
+
+/**
+ * Type guard to check if file transfer is in progress
+ */
+export const isTransferInProgress = (transfer: FileTransfer): boolean => {
+  return transfer.status === 'in-progress';
+};
+
+/**
+ * Type guard to check if file transfer is complete
+ */
+export const isTransferComplete = (transfer: FileTransfer): boolean => {
+  return transfer.status === 'completed';
+};
+
+/**
+ * Type guard to check if file transfer has failed
+ */
+export const isTransferFailed = (transfer: FileTransfer): boolean => {
+  return transfer.status === 'failed' || transfer.status === 'cancelled';
+};
+
+// ============================================================================
+// PEER TYPES
+// ============================================================================
+
+/**
+ * Peer metadata information
+ */
+export interface PeerMetadata {
+  nickname?: string;
+  browser?: string;
+  browserVersion?: string;
+  platform?: string;
+  platformVersion?: string;
+  avatar?: string;
+  capabilities?: string[];
+}
+
+/**
+ * Comprehensive peer interface
+ */
+export interface Peer {
+  id: string;
+  connectionState: ConnectionState;
+  lastSeen: Date;
+  metadata?: PeerMetadata;
+  statistics?: {
+    messagesSent?: number;
+    messagesReceived?: number;
+    filesTransferred?: number;
+    bytesTransferred?: number;
+  };
+}
+
+/**
+ * Type guard to check if peer is connected
+ */
+export const isPeerConnected = (peer: Peer): boolean => {
+  return peer.connectionState === 'connected';
+};
+
+/**
+ * Type guard to check if peer is stale (not seen in 5 minutes)
+ */
+export const isPeerStale = (peer: Peer): boolean => {
+  const FIVE_MINUTES = 5 * 60 * 1000;
+  return Date.now() - peer.lastSeen.getTime() > FIVE_MINUTES;
+};
+
+// ============================================================================
+// ROOM TYPES
+// ============================================================================
+
+/**
+ * Room configuration options
+ */
+export interface RoomConfig {
+  maxPeers?: number;
+  requirePassword?: boolean;
+  allowFileSharing?: boolean;
+  allowClipboardSync?: boolean;
+  enableE2E?: boolean;
+}
+
+/**
+ * Room statistics
+ */
+export interface RoomStatistics {
+  totalMessages: number;
+  totalFiles: number;
+  totalBytes: number;
+  createdAt: Date;
+  lastActivity: Date;
+}
+
+/**
+ * Comprehensive room interface
+ */
+export interface Room {
+  id: string;
+  isHost: boolean;
+  peers: Map<string, Peer>;
+  createdAt: Date;
+  connectionState: ConnectionState;
+  config?: RoomConfig;
+  statistics?: RoomStatistics;
+  password?: string;
+}
+
+/**
+ * Type guard to check if room is hosted by local peer
+ */
+export const isHostRoom = (room: Room): boolean => {
+  return room.isHost;
+};
+
+/**
+ * Get peer count in room
+ */
+export const getPeerCount = (room: Room): number => {
+  return room.peers.size;
+};
+
+// ============================================================================
+// CLIPBOARD TYPES
+// ============================================================================
+
+/**
+ * Clipboard item types
+ */
+export type ClipboardItemType = 'text' | 'image' | 'file';
+
+/**
+ * Clipboard item metadata
+ */
+export interface ClipboardMetadata {
+  size?: number;
+  mimeType?: string;
+  fileName?: string;
+  dimensions?: {
+    width: number;
+    height: number;
+  };
+}
+
+/**
+ * Comprehensive clipboard item interface
+ */
+export interface ClipboardItem {
+  id: string;
+  type: ClipboardItemType;
+  content: string;
+  timestamp: Date;
+  peerId?: string;
+  metadata?: ClipboardMetadata;
+  isSynced?: boolean;
+}
+
+/**
+ * Type guard for text clipboard items
+ */
+export const isTextClipboardItem = (item: ClipboardItem): boolean => {
+  return item.type === 'text';
+};
+
+/**
+ * Type guard for image clipboard items
+ */
+export const isImageClipboardItem = (item: ClipboardItem): boolean => {
+  return item.type === 'image';
+};
+
+/**
+ * Type guard for file clipboard items
+ */
+export const isFileClipboardItem = (item: ClipboardItem): boolean => {
+  return item.type === 'file';
+};
+
+// ============================================================================
+// UI TYPES
+// ============================================================================
+
+/**
+ * Toast notification types
+ */
+export type ToastType = 'info' | 'success' | 'warning' | 'error

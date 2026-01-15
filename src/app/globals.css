@@ -1,0 +1,326 @@
+@import "tailwindcss";
+/* 
+   ---break---
+   */
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  /* 
+   * AVANT-GARDE PALETTE
+   * Depth-based system for infinite stacking context.
+   */
+  --color-background: hsl(0 0% 100%);
+  --color-foreground: hsl(0 0% 3.9%);
+
+  --color-card: hsl(0 0% 100%);
+  --color-card-foreground: hsl(0 0% 3.9%);
+
+  --color-popover: hsl(0 0% 100%);
+  --color-popover-foreground: hsl(0 0% 3.9%);
+
+  --color-primary: hsl(0 0% 9%);
+  --color-primary-foreground: hsl(0 0% 98%);
+
+  --color-secondary: hsl(0 0% 96.1%);
+  --color-secondary-foreground: hsl(0 0% 9%);
+
+  --color-muted: hsl(0 0% 96.1%);
+  --color-muted-foreground: hsl(0 0% 45.1%);
+
+  --color-accent: hsl(0 0% 96.1%);
+  --color-accent-foreground: hsl(0 0% 9%);
+
+  --color-destructive: hsl(0 84.2% 60.2%);
+  --color-destructive-foreground: hsl(0 0% 98%);
+
+  --color-border: hsl(0 0% 89.8%);
+  --color-input: hsl(0 0% 89.8%);
+
+  --color-ring: hsl(0 0% 3.9%);
+  
+  --color-sidebar: hsl(0 0% 98%);
+  --color-sidebar-foreground: hsl(240 5.3% 26.1%);
+  --color-sidebar-primary: hsl(240 5.9% 10%);
+  --color-sidebar-primary-foreground: hsl(0 0% 98%);
+  --color-sidebar-accent: hsl(240 4.8% 95.9%);
+  --color-sidebar-accent-foreground: hsl(240 5.9% 10%);
+  --color-sidebar-border: hsl(220 13% 91%);
+  --color-sidebar-ring: hsl(217.2 91.2% 59.8%);
+
+  /* Custom "Apple Store" Surface Colors */
+  --color-surface-50: hsl(0 0% 98%);
+  --color-surface-100: hsl(0 0% 96%);
+  --color-surface-200: hsl(0 0% 92%);
+  --color-surface-300: hsl(0 0% 88%);
+
+  /* Glassmorphism Variables */
+  --color-glass-border: hsla(0, 0%, 100%, 0.4);
+  --color-glass-surface: hsla(0, 0%, 100%, 0.7);
+
+  /* Radius - Aggressive Squircles */
+  --radius-lg: 1.25rem;
+  --radius-md: 1rem;
+  --radius-sm: 0.75rem;
+  --radius-xl: 1.75rem;
+  --radius-2xl: 2.5rem;
+
+  /* Animation Durations */
+  --animate-duration-fast: 200ms;
+  --animate-duration-normal: 400ms;
+  --animate-duration-slow: 700ms;
+
+  /* Shadows - Soft & Deep */
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+  --shadow-glow: 0 0 20px -5px var(--color-primary);
+
+  /* Keyframes */
+  @keyframes fade-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(20px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes scale-in {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  @keyframes pulse-subtle {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.85;
+    }
+  }
+
+  @keyframes blur-in {
+    from {
+      opacity: 0;
+      filter: blur(10px);
+    }
+    to {
+      opacity: 1;
+      filter: blur(0);
+    }
+  }
+}
+
+/* Dark Palette - "Midnight Store" */
+.dark {
+  --color-background: hsl(0 0% 3.9%); /* Deep Black */
+  --color-foreground: hsl(0 0% 98%);
+
+  --color-card: hsl(0 0% 3.9%);
+  --color-card-foreground: hsl(0 0% 98%);
+
+  --color-popover: hsl(0 0% 3.9%);
+  --color-popover-foreground: hsl(0 0% 98%);
+
+  --color-primary: hsl(0 0% 98%);
+  --color-primary-foreground: hsl(0 0% 9%);
+
+  --color-secondary: hsl(0 0% 14.9%);
+  --color-secondary-foreground: hsl(0 0% 98%);
+
+  --color-muted: hsl(0 0% 14.9%);
+  --color-muted-foreground: hsl(0 0% 63.9%);
+
+  --color-accent: hsl(0 0% 14.9%);
+  --color-accent-foreground: hsl(0 0% 98%);
+
+  --color-destructive: hsl(0 62.8% 30.6%);
+  --color-destructive-foreground: hsl(0 0% 98%);
+
+  --color-border: hsl(0 0% 14.9%);
+  --color-input: hsl(0 0% 14.9%);
+
+  --color-ring: hsl(0 0% 83.1%);
+
+  /* Dark Surface Colors */
+  --color-surface-50: hsl(0 0% 5%);
+  --color-surface-100: hsl(0 0% 8%);
+  --color-surface-200: hsl(0 0% 12%);
+  --color-surface-300: hsl(0 0% 16%);
+
+  /* Glassmorphism Variables Dark */
+  --color-glass-border: hsla(0, 0%, 100%, 0.1);
+  --color-glass-surface: hsla(0, 0%, 0%, 0.7);
+
+  --color-sidebar: hsl(240 5.9% 10%);
+  --color-sidebar-foreground: hsl(240 4.8% 95.9%);
+  --color-sidebar-primary: hsl(224.3 76.3% 48%);
+  --color-sidebar-primary-foreground: hsl(0 0% 100%);
+  --color-sidebar-accent: hsl(240 3.7% 15.9%);
+  --color-sidebar-accent-foreground: hsl(240 4.8% 95.9%);
+  --color-sidebar-border: hsl(240 3.7% 15.9%);
+  --color-sidebar-ring: hsl(217.2 91.2% 59.8%);
+}
+
+/* Feature Themes */
+.theme-clipboard {
+  --color-primary: hsl(221.2 83.2% 53.3%); /* Blue */
+  --color-primary-foreground: hsl(210 40% 98%);
+
+  --color-ring: hsl(221.2 83.2% 53.3%);
+  --shadow-glow: 0 0 20px -5px hsl(221.2 83.2% 53.3%);
+}
+
+.theme-files {
+  --color-primary: hsl(24.6 95% 53.1%); /* Orange */
+  --color-primary-foreground: hsl(0 0% 98%);
+
+  --color-ring: hsl(24.6 95% 53.1%);
+  --shadow-glow: 0 0 20px -5px hsl(24.6 95% 53.1%);
+}
+
+.theme-chat {
+  --color-primary: hsl(142.1 76.2% 36.3%); /* Green */
+  --color-primary-foreground: hsl(355.7 100% 97.3%);
+
+  --color-ring: hsl(142.1 76.2% 36.3%);
+  --shadow-glow: 0 0 20px -5px hsl(142.1 76.2% 36.3%);
+}
+
+/* Base Styles & Resets */
+@layer base {
+  *,
+  ::after,
+  ::before {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    letter-spacing: -0.015em; /* Tight tracking like Apple */
+  }
+
+  /* Typography Utilities */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tighter text-balance;
+  }
+
+  h1 { @apply text-4xl md:text-6xl lg:text-7xl; }
+  h2 { @apply text-3xl md:text-5xl; }
+  h3 { @apply text-2xl md:text-3xl; }
+}
+
+/* Components Layer - Custom Avant-Garde Classes */
+@layer components {
+  /* The Glass Panel - Core Building Block */
+  .glass-panel {
+    @apply bg-[var(--color-glass-surface)] backdrop-blur-2xl border border-[var(--color-glass-border)] shadow-xl;
+  }
+
+  .glass-card {
+    @apply bg-card/80 backdrop-blur-md border border-white/10 shadow-lg dark:border-white/5;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
+  }
+
+  .glass-card:hover {
+    @apply -translate-y-1 shadow-2xl shadow-primary/5;
+  }
+
+  /* Buttons */
+  .btn-premium {
+    @apply relative overflow-hidden transition-all duration-300 active:scale-95;
+    @apply shadow-lg hover:shadow-xl hover:shadow-primary/20;
+  }
+
+  /* Utility Animations */
+  .animate-in-up {
+    animation: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .animate-scale {
+    animation: scale-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  /* Scrollbars */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/30 rounded-full hover:bg-muted-foreground/50 transition-colors;
+  }
+}
+/* 
+   ---break---
+   */
+:root {
+  --sidebar: hsl(0 0% 98%);
+  --sidebar-foreground: hsl(240 5.3% 26.1%);
+  --sidebar-primary: hsl(240 5.9% 10%);
+  --sidebar-primary-foreground: hsl(0 0% 98%);
+  --sidebar-accent: hsl(240 4.8% 95.9%);
+  --sidebar-accent-foreground: hsl(240 5.9% 10%);
+  --sidebar-border: hsl(220 13% 91%);
+  --sidebar-ring: hsl(217.2 91.2% 59.8%);
+}
+/* 
+   ---break---
+   */
+@theme inline {
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+/* 
+   ---break---
+   */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}

@@ -1,0 +1,14 @@
+node_modules
+.next
+coverage
+playwright-report
+.git
+.github
+.vscode
+*.log
+npm-debug.log*
+pnpm-debug.log*
+.env
+.env.*
+Dockerfile
+README.md
