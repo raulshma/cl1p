@@ -87,7 +87,7 @@ export class FileTransferHandler {
 
     this.config = {
       autoAccept: config.autoAccept ?? false,
-      maxFileSize: config.maxFileSize ?? 500 * 1024 * 1024, // 500MB default
+      maxFileSize: config.maxFileSize ?? 10 * 1024 * 1024 * 1024, // 10GB default
       requestTimeout: config.requestTimeout ?? 60000, // 60 seconds default
       allowedFileTypes: config.allowedFileTypes ?? [],
       debug: config.debug ?? false,

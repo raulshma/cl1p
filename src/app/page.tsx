@@ -8,16 +8,6 @@ import { LocalNetworkDevices } from '@/components/LocalNetworkDevices';
 import { BackgroundSystem } from '@/components/layout/BackgroundSystem';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarHeader,
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-  SidebarRail,
-} from '@/components/ui/sidebar';
-
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
 
@@ -30,7 +20,7 @@ export default function Home() {
   const router = useRouter();
   const [joinRoomId, setJoinRoomId] = React.useState('');
   const { currentRoom } = useRoomStore();
-
+  const [activeTab, setActiveTab] = React.useState<'create' | 'join' | 'scan'>('create');
 
   React.useEffect(() => {
     if (currentRoom?.id) {
@@ -41,131 +31,148 @@ export default function Home() {
   if (currentRoom) return null;
 
   return (
-    <SidebarProvider defaultOpen={true}>
-      <Sidebar
-        side="left"
-        variant="sidebar"
-        collapsible="icon"
-        className="border-r border-sidebar-border bg-sidebar"
+    <div className="relative min-h-screen w-full flex flex-col items-center justify-center p-6 overflow-hidden">
+      
+      <BackgroundSystem />
+
+      <MotionDiv 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+        className="relative z-10 w-full max-w-2xl flex flex-col items-center gap-12"
       >
-        <SidebarHeader className="px-3 py-4">
-          <div className="flex items-center justify-between group-data-[collapsible=icon]:justify-center">
-            <div className="group-data-[collapsible=icon]:hidden">
-              <p className="text-sm font-medium">Local Network</p>
-            </div>
-            <SidebarTrigger />
-          </div>
-        </SidebarHeader>
-        <SidebarContent className="px-3 pb-4">
-          <LocalNetworkDevices />
-        </SidebarContent>
-        <SidebarRail />
-      </Sidebar>
-
-      <SidebarInset className="bg-transparent transition-all duration-200 ease-linear md:peer-data-[state=expanded]:pl-[var(--sidebar-width)] md:peer-data-[state=collapsed]:pl-[var(--sidebar-width-icon)]">
-        <div className="relative min-h-screen w-full overflow-hidden flex flex-col items-center justify-center p-6 md:p-12">
-          
-          <div className="fixed top-4 left-4 z-50 md:hidden">
-             <SidebarTrigger className="h-10 w-10 shadow-lg rounded-full bg-background border border-border" />
-          </div>
-          
-          {/* --- High Fidelity Background System --- */}
-          <BackgroundSystem />
-
-          <div className="relative z-10 w-full max-w-5xl mx-auto flex flex-col md:flex-row items-center md:items-start justify-center gap-12 lg:gap-24">
-            
-            {/* --- Left Column: Value Proposition --- */}
-            <MotionDiv 
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              className="flex-1 text-center md:text-left space-y-8 pt-10 md:pt-20"
-            >
-              <div className="space-y-4">
-                <MotionH1 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1, duration: 0.8 }}
-                  className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tighter"
-                >
-                  <span className="bg-linear-to-b from-foreground via-foreground/90 to-foreground/50 bg-clip-text text-transparent">
-                    Sync.
-                  </span>
-                  <br />
-                  <span className="text-muted-foreground/40 font-medium">Unbound.</span>
-                </MotionH1>
-                
-                <MotionP 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.3, duration: 0.8 }}
-                  className="text-xl md:text-2xl text-muted-foreground font-light leading-relaxed max-w-lg mx-auto md:mx-0"
-                >
-                  Peer-to-peer clipboard sharing. <br />
-                  <span className="text-foreground font-normal">Zero latency. Zero servers.</span>
-                </MotionP>
-              </div>
-
-              <MotionDiv 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="flex flex-col gap-4 max-w-sm mx-auto md:mx-0"
-              >
-                 <div className="p-6 rounded-3xl bg-secondary/30 border border-border/50 backdrop-blur-md shadow-sm">
-                    <div className="flex items-center gap-3 mb-3">
-                        <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Quick Join</span>
-                    </div>
-                    <form 
-                        onSubmit={(e) => {
-                            e.preventDefault();
-                            if(joinRoomId) router.push(`/room/${encodeURIComponent(joinRoomId)}`);
-                        }}
-                        className="flex gap-2"
-                    >
-                        <Input 
-                            placeholder="Enter Room ID..." 
-                            value={joinRoomId}
-                            onChange={(e) => setJoinRoomId(e.target.value)}
-                            className="bg-background/50 border-transparent focus-visible:bg-background transition-all"
-                        />
-                        <Button type="submit" size="icon" variant="secondary" disabled={!joinRoomId} className="shrink-0">
-                            <ArrowRightIcon className="h-5 w-5" />
-                        </Button>
-                    </form>
-                 </div>
-              </MotionDiv>
-            </MotionDiv>
-
-            {/* --- Right Column: Action Card --- */}
-            <MotionDiv 
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-              className="w-full max-w-md"
-            >
-              <div className="relative group">
-                <div className="absolute -inset-1 bg-linear-to-r from-primary/20 to-secondary/20 rounded-2xl blur-xl opacity-50 group-hover:opacity-100 transition duration-700" />
-                <RoomCreationForm />
-              </div>
-            </MotionDiv>
-
-          </div>
-          
-          {/* Footer / Status */}
-          <MotionDiv 
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: 1 }} 
-            transition={{ delay: 1, duration: 1 }}
-            className="absolute bottom-6 md:bottom-12 left-0 right-0 text-center pointer-events-none"
+        {/* Branding / Header */}
+        <div className="text-center space-y-6">
+          <MotionH1 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.8 }}
+            className="text-6xl md:text-8xl font-black tracking-tighter select-none"
           >
-            <p className="text-xs font-medium text-muted-foreground/30 uppercase tracking-[0.2em]">
-              End-to-End Encrypted Session
-            </p>
-          </MotionDiv>
+            <span className="bg-linear-to-b from-foreground via-foreground/90 to-foreground/40 bg-clip-text text-transparent">
+              SYNC.
+            </span>
+          </MotionH1>
+          <MotionP 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4, duration: 0.8 }}
+            className="text-lg md:text-xl text-muted-foreground/60 font-medium tracking-[0.2em] uppercase"
+          >
+            Zero Latency. Zero Servers.
+          </MotionP>
         </div>
-      </SidebarInset>
-    </SidebarProvider>
+
+        {/* Command Center Hub */}
+        <div className="w-full relative">
+           {/* Glass Container */}
+           <div className="absolute inset-0 bg-background/40 backdrop-blur-2xl rounded-3xl border border-white/10 shadow-2xl transition-all duration-500" 
+                style={{ 
+                    height: activeTab === 'scan' ? '600px' : 'auto',
+                    minHeight: '400px'
+                }} 
+           />
+           
+           <div className="relative p-6 md:p-12 flex flex-col gap-8">
+              {/* Tab Switcher */}
+              <div className="flex justify-center mb-4">
+                <div className="bg-secondary/30 p-1 rounded-full flex relative w-full max-w-md">
+                    <div 
+                        className="absolute inset-y-1 bg-background shadow-sm rounded-full transition-all duration-300 ease-out"
+                        style={{
+                            left: activeTab === 'create' ? '0.25rem' : activeTab === 'join' ? 'calc(33.33% + 0.125rem)' : 'calc(66.66%)',
+                            width: 'calc(33.33% - 0.25rem)',
+                        }}
+                    />
+                    <button 
+                        onClick={() => setActiveTab('create')}
+                        className={`relative w-1/3 py-2 text-sm font-medium transition-colors z-10 ${activeTab === 'create' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground/80'}`}
+                    >
+                        Create
+                    </button>
+                    <button 
+                        onClick={() => setActiveTab('join')}
+                        className={`relative w-1/3 py-2 text-sm font-medium transition-colors z-10 ${activeTab === 'join' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground/80'}`}
+                    >
+                        Join
+                    </button>
+                    <button 
+                        onClick={() => setActiveTab('scan')}
+                        className={`relative w-1/3 py-2 text-sm font-medium transition-colors z-10 ${activeTab === 'scan' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground/80'}`}
+                    >
+                        Scan
+                    </button>
+                </div>
+              </div>
+
+              <div className="relative min-h-[250px]">
+                  {activeTab === 'create' && (
+                      <MotionDiv
+                        key="create"
+                        initial={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
+                        animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+                        exit={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
+                        transition={{ duration: 0.4 }}
+                      >
+                         <RoomCreationForm />
+                      </MotionDiv>
+                  )}
+
+                  {activeTab === 'join' && (
+                      <MotionDiv
+                        key="join"
+                        initial={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
+                        animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+                        exit={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
+                        transition={{ duration: 0.4 }}
+                        className="flex flex-col gap-6"
+                      >
+                           <div className="text-center space-y-2 mb-4">
+                               <div className="mx-auto w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center mb-2">
+                                    <ArrowRightIcon className="h-6 w-6 text-green-500" />
+                               </div>
+                               <h3 className="text-xl font-bold">Join Existing</h3>
+                               <p className="text-muted-foreground text-sm">Enter a room ID from another device</p>
+                           </div>
+
+                           <form 
+                                onSubmit={(e) => {
+                                    e.preventDefault();
+                                    if(joinRoomId) router.push(`/room/${encodeURIComponent(joinRoomId)}`);
+                                }}
+                                className="flex flex-col gap-4 max-w-sm mx-auto w-full"
+                            >
+                                <Input 
+                                    placeholder="Room ID (e.g. fast-fox)" 
+                                    value={joinRoomId}
+                                    onChange={(e) => setJoinRoomId(e.target.value)}
+                                    className="bg-secondary/20 border-border/50 text-center text-lg h-12 tracking-wide focus-visible:ring-1 focus-visible:ring-primary/50 placeholder:text-muted-foreground/30"
+                                />
+                                <Button type="submit" size="lg" className="w-full font-bold tracking-wide" disabled={!joinRoomId}>
+                                    Connect
+                                </Button>
+                            </form>
+                      </MotionDiv>
+                  )}
+
+                  {activeTab === 'scan' && (
+                       <MotionDiv
+                        key="scan"
+                        initial={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
+                        animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+                        exit={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
+                        transition={{ duration: 0.4 }}
+                        className="h-full overflow-y-auto max-h-[500px] pr-2 scrollbar-thin scrollbar-thumb-secondary"
+                      >
+                         <LocalNetworkDevices />
+                      </MotionDiv>
+                  )}
+              </div>
+
+           </div>
+        </div>
+
+      </MotionDiv>
+    </div>
   );
 }

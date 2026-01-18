@@ -365,7 +365,7 @@ describe('File Validation', () => {
     });
 
     it('should have default max file size defined', () => {
-      expect(DEFAULT_MAX_FILE_SIZE).toBe(10 * 1024 * 1024); // 10MB
+      expect(DEFAULT_MAX_FILE_SIZE).toBe(10 * 1024 * 1024 * 1024); // 10GB
     });
   });
 

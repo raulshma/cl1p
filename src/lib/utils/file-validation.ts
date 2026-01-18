@@ -10,11 +10,11 @@
 import { getRuntimeEnvNumber } from '@/lib/runtime-config';
 
 /**
- * Maximum file size in bytes (10MB default)
+ * Maximum file size in bytes (10GB default)
  */
 export const DEFAULT_MAX_FILE_SIZE = getRuntimeEnvNumber(
   'NEXT_PUBLIC_MAX_FILE_SIZE',
-  10 * 1024 * 1024
+  10 * 1024 * 1024 * 1024
 );
 
 /**

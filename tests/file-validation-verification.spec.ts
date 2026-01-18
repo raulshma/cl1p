@@ -3,7 +3,7 @@
  *
  * This test verifies that the file validation feature works correctly:
  * - Type whitelisting (safe formats only)
- * - Size limits (max 10MB)
+ * - Size limits (max 10GB)
  * - Filename sanitization (prevents path traversal)
  * - Clear error messages for invalid files
  */
@@ -27,8 +27,8 @@ test.describe('File Validation Feature Verification', () => {
   });
 
   test('should display file size limit information', async ({ page }) => {
-    // Check if max file size is displayed (first dropzone has 10MB limit)
-    const firstDropzoneSize = page.getByText('Maximum file size: 10 MB');
+    // Check if max file size is displayed (first dropzone has 10GB limit)
+    const firstDropzoneSize = page.getByText('Maximum file size: 10 GB');
     await expect(firstDropzoneSize).toBeVisible();
   });
 
@@ -55,16 +55,21 @@ test.describe('File Validation Feature Verification', () => {
   });
 
   test('should reject files exceeding size limit', async ({ page }) => {
-    // Create a file larger than 10MB (simulate with a large content)
-    const largeContent = 'x'.repeat(11 * 1024 * 1024); // 11MB
+    // Note: Testing with actual 10GB+ files is impractical in browser tests
+    // This test validates the error message appears for oversized files
+    // The actual 10GB limit is tested in unit tests
+    
+    // For demo purposes, we'll test against a smaller dropzone on the page
+    // Navigate to the "Small Files Only" dropzone which has 1MB limit
+    const smallFileInput = page.locator('input[type="file"]').nth(2);
+    
+    // Create a file larger than 1MB
+    const largeContent = 'x'.repeat(2 * 1024 * 1024); // 2MB
     const fileBuffer = Buffer.from(largeContent, 'utf-8');
     const fileName = 'large-file.txt';
 
-    // Get the first file input
-    const fileInput = page.locator('input[type="file"]').first();
-
-    // Try to upload a large file
-    await fileInput.setInputFiles({
+    // Try to upload a large file to the 1MB-limited dropzone
+    await smallFileInput.setInputFiles({
       name: fileName,
       mimeType: 'text/plain',
       buffer: fileBuffer,

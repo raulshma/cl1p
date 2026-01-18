@@ -76,7 +76,7 @@ export class FileReassembler {
   constructor(config: FileReassemblerConfig = {}) {
     this.config = {
       enableChecksumValidation: config.enableChecksumValidation ?? true,
-      maxFileSize: config.maxFileSize ?? 500 * 1024 * 1024, // 500MB default
+      maxFileSize: config.maxFileSize ?? 10 * 1024 * 1024 * 1024, // 10GB default
       maxMemoryUsage: config.maxMemoryUsage ?? 1024 * 1024 * 1024, // 1GB default
       debug: config.debug ?? false,
     };
