@@ -51,7 +51,7 @@ ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 ENV NGINX_PORT=8080
 ENV UPSTREAM_PORT=3000
-ENV NGINX_CLIENT_MAX_BODY_SIZE=100m
+ENV NGINX_CLIENT_MAX_BODY_SIZE=6g
 
 RUN apk add --no-cache nginx gettext su-exec openssl \
 	&& addgroup -S nodejs \

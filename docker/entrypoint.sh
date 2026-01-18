@@ -8,7 +8,7 @@ set -e
 : "${NGINX_SSL_KEY_PATH:=/etc/nginx/certs/selfsigned.key}"
 : "${NGINX_SSL_CN:=localhost}"
 : "${UPSTREAM_PORT:=3000}"
-: "${NGINX_CLIENT_MAX_BODY_SIZE:=100m}"
+: "${NGINX_CLIENT_MAX_BODY_SIZE:=6g}"
 
 : "${NEXT_PUBLIC_APP_NAME:=Live Clipboard}"
 if [ -z "${NEXT_PUBLIC_APP_URL}" ]; then
