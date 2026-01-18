@@ -12,7 +12,7 @@ param(
   [string]$EnableErrorTracking = "false",
   [string]$MaxPeerConnections = "10",
   [string]$PeerConnectionTimeout = "30000",
-  [string]$MaxFileSize = "104857600",
+  [string]$MaxFileSize = "6442450944",
   [string]$ChunkSize = "16384",
   [string]$ClipboardSyncInterval = "1000",
   [string]$MaxClipboardSize = "1048576",

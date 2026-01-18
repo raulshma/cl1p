@@ -211,8 +211,8 @@ NEXT_PUBLIC_PEER_CONNECTION_TIMEOUT=30000
 ### File Transfer Configuration
 
 ```bash
-# Maximum file size for transfer (bytes) - default: 100MB
-NEXT_PUBLIC_MAX_FILE_SIZE=104857600
+# Maximum file size for transfer (bytes) - default: 6GB
+NEXT_PUBLIC_MAX_FILE_SIZE=6442450944
 
 # Chunk size for file transfer (bytes) - default: 16KB
 NEXT_PUBLIC_CHUNK_SIZE=16384
@@ -479,7 +479,7 @@ import { FileDropzone } from '@/components/FileDropzone';
 
 <FileDropzone
   onFilesDrop={handleFilesDrop}
-  maxSize={104857600}
+  maxSize={6442450944}
   allowedTypes={['image/*', 'application/pdf']}
 />
 ```
