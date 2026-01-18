@@ -36,8 +36,12 @@ import { PeerSelectionDialog } from '@/components/PeerSelectionDialog';
 import QRCode from 'react-qr-code';
 import { getCurrentPageUrl } from '@/lib/utils/url-encoder';
 import { v4 as uuidv4 } from 'uuid';
-import type { FileMetadata, FileTransferRequest, FileTransferResponse, FileChunkMetadata } from '@/lib/webrtc';
+import type { FileMetadata, FileTransferRequest, FileTransferResponse, FileChunkMetadata, FileTransferMethod } from '@/lib/webrtc';
 import { formatFileSize } from '@/lib/utils';
+import { downloadFile } from '@/lib/utils/file-download';
+import { WEBTORRENT_THRESHOLD_BYTES, WEBTORRENT_TRACKERS } from '@/lib/utils/transfer-config';
+import { getWebTorrentClient, destroyWebTorrentClient } from '@/lib/webtorrent/client';
+import type { WebTorrentTorrent } from '@/lib/webtorrent/types';
 import {
   Dialog,
   DialogContent,
@@ -80,12 +84,14 @@ type PendingIncomingRequest = {
   metadata: FileMetadata;
   senderPeerId: string;
   receivedAt: number;
+  transferMethod: FileTransferMethod;
 };
 
 type OutgoingTransfer = {
   file: File;
   peerId: string;
   metadata: FileMetadata;
+  transferMethod: FileTransferMethod;
 };
 
 type FileTransferChunkMessage = {
@@ -180,6 +186,7 @@ export default function RoomPage() {
 
   const outgoingTransfersRef = React.useRef<Map<string, OutgoingTransfer>>(new Map());
   const incomingTransfersRef = React.useRef<Map<string, { metadata: FileMetadata; senderPeerId: string }>>(new Map());
+  const webTorrentTransfersRef = React.useRef<Map<string, { torrent: WebTorrentTorrent; peerId: string; direction: 'upload' | 'download' }>>(new Map());
   const sendToPeerRef = React.useRef<(peerId: string, data: string | object | ArrayBuffer) => boolean>(() => false);
   const localPeerIdRef = React.useRef<string>('');
 
@@ -206,6 +213,22 @@ export default function RoomPage() {
       }
     },
   });
+
+  React.useEffect(() => {
+    const activeTransfers = webTorrentTransfersRef.current;
+
+    return () => {
+      for (const { torrent } of activeTransfers.values()) {
+        try {
+          torrent.destroy({ destroyStore: true });
+        } catch {
+          // Ignore cleanup errors
+        }
+      }
+      activeTransfers.clear();
+      void destroyWebTorrentClient();
+    };
+  }, []);
 
   const arrayBufferToBase64 = React.useCallback((buffer: ArrayBuffer): string => {
     const bytes = new Uint8Array(buffer);
@@ -241,12 +264,14 @@ export default function RoomPage() {
   const sendTransferRequest = React.useCallback((file: File, peerId: string): string | null => {
     const transferId = uuidv4();
     const metadata = createFileMetadata(file, transferId);
+    const transferMethod: FileTransferMethod = file.size > WEBTORRENT_THRESHOLD_BYTES ? 'webtorrent' : 'webrtc';
     const request: FileTransferRequest = {
       transferId,
       metadata,
       senderId: localPeerIdRef.current,
       timestamp: Date.now(),
       expiresAt: Date.now() + TRANSFER_REQUEST_TIMEOUT_MS,
+      transferMethod,
     };
 
     const sent = sendToPeerRef.current(peerId, {
@@ -259,13 +284,14 @@ export default function RoomPage() {
       return null;
     }
 
-    outgoingTransfersRef.current.set(transferId, { file, peerId, metadata });
+    outgoingTransfersRef.current.set(transferId, { file, peerId, metadata, transferMethod });
 
     addTransfer({
       transferId,
       fileName: metadata.name,
       fileSize: metadata.size,
       direction: 'upload',
+      method: transferMethod,
       status: 'pending',
       progress: 0,
       peerId,
@@ -274,7 +300,7 @@ export default function RoomPage() {
     return transferId;
   }, [addTransfer, createFileMetadata]);
 
-  const startOutgoingTransfer = React.useCallback(async (transferId: string) => {
+  const startOutgoingWebRtcTransfer = React.useCallback(async (transferId: string) => {
     const outgoing = outgoingTransfersRef.current.get(transferId);
     if (!outgoing) return;
 
@@ -335,6 +361,139 @@ export default function RoomPage() {
     setTransferStatus(transferId, 'completed');
   }, [arrayBufferToBase64, setTransferStatus, updateTransferProgress]);
 
+  const stopWebTorrentTransfer = React.useCallback((transferId: string) => {
+    const active = webTorrentTransfersRef.current.get(transferId);
+    if (!active) return;
+
+    try {
+      active.torrent.destroy({ destroyStore: true });
+    } catch {
+      // Ignore cleanup errors
+    }
+
+    webTorrentTransfersRef.current.delete(transferId);
+  }, []);
+
+  const startOutgoingWebTorrentTransfer = React.useCallback(async (transferId: string) => {
+    const outgoing = outgoingTransfersRef.current.get(transferId);
+    if (!outgoing) return;
+
+    const { file, peerId, metadata } = outgoing;
+
+    try {
+      const client = await getWebTorrentClient();
+
+      setTransferStatus(transferId, 'in-progress');
+
+      const torrent = client.seed(file, { announce: WEBTORRENT_TRACKERS }, (seeded) => {
+        sendToPeerRef.current(peerId, {
+          type: 'file-transfer-webtorrent',
+          data: {
+            transferId,
+            magnetURI: seeded.magnetURI,
+            metadata,
+          },
+        });
+      });
+
+      webTorrentTransfersRef.current.set(transferId, {
+        torrent,
+        peerId,
+        direction: 'upload',
+      });
+
+      torrent.on('upload', () => {
+        const uploaded = torrent.uploaded ?? 0;
+        const progress = Math.min(100, (uploaded / Math.max(1, metadata.size)) * 100);
+        updateTransferProgress(transferId, progress, uploaded);
+      });
+
+      torrent.on('error', (error) => {
+        const message = error instanceof Error ? error.message : 'WebTorrent upload failed';
+        setTransferStatus(transferId, 'failed', message);
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'WebTorrent upload failed';
+      setTransferStatus(transferId, 'failed', message);
+    }
+  }, [setTransferStatus, updateTransferProgress]);
+
+  const startIncomingWebTorrentTransfer = React.useCallback(async (
+    transferId: string,
+    magnetURI: string,
+    metadata: FileMetadata,
+    senderPeerId: string
+  ) => {
+    try {
+      const client = await getWebTorrentClient();
+
+      setTransferStatus(transferId, 'in-progress');
+
+      const torrent = client.add(magnetURI, { announce: WEBTORRENT_TRACKERS }, () => {
+        // Metadata ready
+      });
+
+      webTorrentTransfersRef.current.set(transferId, {
+        torrent,
+        peerId: senderPeerId,
+        direction: 'download',
+      });
+
+      const syncProgress = () => {
+        const progress = Math.max(0, Math.min(100, torrent.progress * 100));
+        updateTransferProgress(transferId, progress, torrent.downloaded);
+      };
+
+      torrent.on('download', () => {
+        syncProgress();
+      });
+
+      torrent.on('done', () => {
+        syncProgress();
+        void (async () => {
+          const targetFile = torrent.files.find(file => file.name === metadata.name) ?? torrent.files[0];
+          if (!targetFile) {
+            setTransferStatus(transferId, 'failed', 'No files found in torrent');
+            stopWebTorrentTransfer(transferId);
+            return;
+          }
+
+          const blob = await targetFile.blob();
+          const receivedFile = new File([blob], targetFile.name, {
+            type: metadata.type || 'application/octet-stream',
+            lastModified: metadata.lastModified || Date.now(),
+          });
+
+          const downloadResult = downloadFile(receivedFile, { autoDownload: true });
+          if (!downloadResult.success) {
+            setTransferStatus(transferId, 'failed', downloadResult.error || 'Failed to download file');
+            stopWebTorrentTransfer(transferId);
+            return;
+          }
+
+          setTransferStatus(transferId, 'completed');
+
+          sendToPeerRef.current(senderPeerId, {
+            type: 'file-transfer-webtorrent-complete',
+            data: { transferId },
+          });
+
+          stopWebTorrentTransfer(transferId);
+        })();
+      });
+
+      torrent.on('error', (error) => {
+        const message = error instanceof Error ? error.message : 'WebTorrent download failed';
+        setTransferStatus(transferId, 'failed', message);
+        stopWebTorrentTransfer(transferId);
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'WebTorrent download failed';
+      setTransferStatus(transferId, 'failed', message);
+      stopWebTorrentTransfer(transferId);
+    }
+  }, [setTransferStatus, stopWebTorrentTransfer, updateTransferProgress]);
+
   const handleIncomingChunk = React.useCallback(async (payload: FileTransferChunkMessage, senderPeerId: string) => {
     try {
       const metadata: FileChunkMetadata = {
@@ -366,6 +525,7 @@ export default function RoomPage() {
           fileName: payload.fileName,
           fileSize: payload.fileSize,
           direction: 'download',
+          method: 'webrtc',
           status: 'in-progress',
           progress: 0,
           peerId: senderPeerId,
@@ -392,6 +552,8 @@ export default function RoomPage() {
       const request = message.data as FileTransferRequest;
       if (!request?.transferId) return true;
 
+      const transferMethod: FileTransferMethod = request.transferMethod ?? 'webrtc';
+
       setPendingIncomingRequests(prev => {
         if (prev.some(p => p.transferId === request.transferId)) return prev;
         return [...prev, {
@@ -399,6 +561,7 @@ export default function RoomPage() {
           metadata: request.metadata,
           senderPeerId,
           receivedAt: Date.now(),
+          transferMethod,
         }];
       });
 
@@ -407,6 +570,7 @@ export default function RoomPage() {
         fileName: request.metadata.name,
         fileSize: request.metadata.size,
         direction: 'download',
+        method: transferMethod,
         status: 'pending',
         progress: 0,
         peerId: senderPeerId,
@@ -420,10 +584,15 @@ export default function RoomPage() {
       const response = message.data as FileTransferResponse;
       if (!response?.transferId) return true;
 
-      if (!outgoingTransfersRef.current.has(response.transferId)) return true;
+      const outgoing = outgoingTransfersRef.current.get(response.transferId);
+      if (!outgoing) return true;
 
       if (response.accepted) {
-        void startOutgoingTransfer(response.transferId);
+        if (outgoing.transferMethod === 'webtorrent') {
+          void startOutgoingWebTorrentTransfer(response.transferId);
+        } else {
+          void startOutgoingWebRtcTransfer(response.transferId);
+        }
       } else {
         setTransferStatus(response.transferId, 'failed', response.reason || 'Transfer rejected');
       }
@@ -439,6 +608,36 @@ export default function RoomPage() {
       return true;
     }
 
+    if (type === 'file-transfer-webtorrent') {
+      const data = message.data as { transferId?: string; magnetURI?: string; metadata?: FileMetadata };
+      if (!data?.transferId || !data?.magnetURI) return true;
+
+      const existing = incomingTransfersRef.current.get(data.transferId);
+      const metadata = data.metadata ?? existing?.metadata;
+
+      if (!metadata) {
+        setTransferStatus(data.transferId, 'failed', 'Missing WebTorrent metadata');
+        return true;
+      }
+
+      incomingTransfersRef.current.set(data.transferId, {
+        metadata,
+        senderPeerId,
+      });
+
+      void startIncomingWebTorrentTransfer(data.transferId, data.magnetURI, metadata, senderPeerId);
+      return true;
+    }
+
+    if (type === 'file-transfer-webtorrent-complete') {
+      const data = message.data as { transferId?: string };
+      if (data?.transferId) {
+        setTransferStatus(data.transferId, 'completed');
+        stopWebTorrentTransfer(data.transferId);
+      }
+      return true;
+    }
+
     if (type === 'file-transfer-chunk') {
       const payload = message.data as FileTransferChunkMessage;
       void handleIncomingChunk(payload, senderPeerId);
@@ -450,6 +649,7 @@ export default function RoomPage() {
       if (cancelData?.transferId) {
         setTransferStatus(cancelData.transferId, 'cancelled', cancelData.reason || 'Transfer cancelled');
         cancelReassembly(cancelData.transferId);
+        stopWebTorrentTransfer(cancelData.transferId);
       }
       return true;
     }
@@ -488,7 +688,16 @@ export default function RoomPage() {
     }
 
     return false;
-  }, [addTransfer, cancelReassembly, handleIncomingChunk, setTransferStatus, startOutgoingTransfer]);
+  }, [
+    addTransfer,
+    cancelReassembly,
+    handleIncomingChunk,
+    setTransferStatus,
+    startIncomingWebTorrentTransfer,
+    startOutgoingWebRtcTransfer,
+    startOutgoingWebTorrentTransfer,
+    stopWebTorrentTransfer,
+  ]);
 
   // Check if this is a join link (has 'join' query param)
   const isJoinLink = searchParams?.get('join') === 'true';
@@ -899,6 +1108,7 @@ export default function RoomPage() {
     }
 
     cancelReassembly(transferId);
+    stopWebTorrentTransfer(transferId);
   };
 
   const handleMessageSend = (message: string) => {
@@ -1000,7 +1210,7 @@ export default function RoomPage() {
     <div className={themeClass}>
       <BackgroundSystem />
 
-      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-[80px_350px_1fr] xl:grid-cols-[80px_400px_1fr] gap-6 h-full min-h-[calc(100vh-4rem)] p-4 md:p-6 lg:p-8 max-w-[1920px] mx-auto">
+      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-[80px_350px_1fr] xl:grid-cols-[80px_400px_1fr] gap-6 h-full min-h-[calc(100vh-4rem)] p-4 md:p-6 lg:p-8 max-w-480 mx-auto">
         {/* Sidebar - Desktop */}
         <aside className="hidden lg:flex flex-col items-center gap-4 py-6 glass-card rounded-2xl h-fit sticky top-24 z-20">
           <Link
@@ -1177,7 +1387,7 @@ export default function RoomPage() {
                 )}
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex-1 overflow-y-auto px-0 py-0 min-h-[250px] relative">
+            <CardContent className="flex-1 overflow-y-auto px-0 py-0 min-h-62.5 relative">
               {connectedPeers.length === 0 ? (
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground p-6">
                   <div className="p-4 bg-muted/30 rounded-full mb-3 backdrop-blur-sm">
@@ -1195,7 +1405,7 @@ export default function RoomPage() {
                       Connect to {availablePeers.length} Peer{availablePeers.length !== 1 ? 's' : ''}
                     </Button>
                   ) : (
-                     <p className="text-xs text-muted-foreground/60 mt-2 max-w-[180px] text-center">
+                     <p className="text-xs text-muted-foreground/60 mt-2 max-w-45 text-center">
                         Share the room link to invite others.
                      </p>
                   )}
@@ -1232,14 +1442,14 @@ export default function RoomPage() {
 
           {/* Messages / Chat */}
           {activeFeatures.has('chat') && (
-            <Card className="flex-1 min-h-[400px] glass-card border-white/10 shadow-lg flex flex-col animate-in fade-in zoom-in-95 duration-300">
+            <Card className="flex-1 min-h-100 glass-card border-white/10 shadow-lg flex flex-col animate-in fade-in zoom-in-95 duration-300">
               <CardHeader className="bg-white/5 border-b border-white/5 py-4">
                 <CardTitle className="text-lg font-bold flex items-center gap-2">
                     <span className="text-xl">💬</span> Messages
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex-1 flex flex-col gap-4 p-4">
-                <div className="flex-1 min-h-[200px] border border-white/10 rounded-xl bg-background/30 backdrop-blur-sm overflow-hidden shadow-inner">
+                <div className="flex-1 min-h-50 border border-white/10 rounded-xl bg-background/30 backdrop-blur-sm overflow-hidden shadow-inner">
                   <MessageList className="h-full" localPeerId={localPeerId} />
                 </div>
                 <TextareaInput
@@ -1250,7 +1460,7 @@ export default function RoomPage() {
                   showActions={true}
                   showCounter={false}
                   maxLength={2000}
-                  className="min-h-[80px] bg-background/50 focus:bg-background/80 transition-all border-white/10"
+                  className="min-h-20 bg-background/50 focus:bg-background/80 transition-all border-white/10"
                   showHeader={false}
                 />
               </CardContent>
@@ -1318,7 +1528,7 @@ export default function RoomPage() {
                             <div className="min-w-0">
                               <p className="text-sm font-bold truncate">{request.metadata.name}</p>
                               <p className="text-xs text-muted-foreground">
-                                From {getPeerLabel(request.senderPeerId)} • {formatFileSize(request.metadata.size)}
+                                From {getPeerLabel(request.senderPeerId)} • {formatFileSize(request.metadata.size)} • {request.transferMethod === 'webtorrent' ? 'WebTorrent' : 'WebRTC'}
                               </p>
                             </div>
                             <div className="flex items-center gap-2">
@@ -1466,7 +1676,7 @@ export default function RoomPage() {
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       {qr.label}
                     </p>
-                    <code className="text-[11px] text-muted-foreground break-all text-center max-w-[260px]">
+                    <code className="text-[11px] text-muted-foreground break-all text-center max-w-65">
                       {qr.url}
                     </code>
                   </div>
@@ -1474,7 +1684,7 @@ export default function RoomPage() {
               </div>
             ) : (
               <div className="rounded-lg bg-white p-4 shadow-sm">
-                <div className="h-[240px] w-[240px] rounded-md bg-muted animate-pulse" />
+                <div className="h-60 w-60 rounded-md bg-muted animate-pulse" />
               </div>
             )}
           </div>

@@ -46,6 +46,7 @@
     "tailwindcss": "^4.1.18",
     "tailwindcss-animate": "^1.0.7",
     "uuid": "^13.0.0",
+    "webtorrent": "^2.8.5",
     "zod": "^3.25.76",
     "zustand": "^5.0.10"
   },
@@ -59,6 +60,7 @@
     "@types/react": "19.2.8",
     "@types/react-dom": "19.2.3",
     "@types/simple-peer": "^9.11.9",
+    "@types/webtorrent": "^0.110.1",
     "@vitest/coverage-v8": "^4.0.17",
     "@vitest/ui": "^4.0.17",
     "eslint": "^9.39.2",

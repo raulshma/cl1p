@@ -19,6 +19,11 @@ export type FileTransferInitMessageType =
   | 'file-transfer-start';
 
 /**
+ * File transfer transport method
+ */
+export type FileTransferMethod = 'webrtc' | 'webtorrent';
+
+/**
  * File metadata for transfer initiation
  */
 export interface FileMetadata {
@@ -41,6 +46,7 @@ export interface FileTransferRequest {
   senderId: string;
   timestamp: number;
   expiresAt: number;
+  transferMethod?: FileTransferMethod;
 }
 
 /**

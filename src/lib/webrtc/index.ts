@@ -110,6 +110,7 @@ export {
 
 export type {
   FileTransferInitMessageType,
+  FileTransferMethod,
   FileMetadata,
   FileTransferRequest,
   FileTransferResponse,

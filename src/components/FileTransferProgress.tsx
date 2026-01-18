@@ -17,6 +17,11 @@ import { cn } from '@/lib/utils';
 export type TransferDirection = 'upload' | 'download';
 
 /**
+ * Transfer method type
+ */
+export type TransferMethod = 'webrtc' | 'webtorrent';
+
+/**
  * Transfer status type
  */
 export type TransferStatus = 'pending' | 'in-progress' | 'completed' | 'failed' | 'cancelled';
@@ -29,6 +34,7 @@ export interface FileTransferProgress {
   fileName: string;
   fileSize: number;
   direction: TransferDirection;
+  method?: TransferMethod;
   status: TransferStatus;
   progress: number; // 0-100
   transferSpeed?: number; // bytes per second
@@ -102,12 +108,15 @@ export const FileTransferProgress: React.FC<FileTransferProgressProps> = ({
     fileName,
     fileSize,
     direction,
+    method,
     status,
     progress,
     transferSpeed,
     timeRemaining,
     error,
   } = transfer;
+
+  const methodLabel = method === 'webtorrent' ? 'WebTorrent' : 'WebRTC';
 
   // Determine icon based on direction and status
   const Icon = useMemo(() => {
@@ -180,7 +189,7 @@ export const FileTransferProgress: React.FC<FileTransferProgressProps> = ({
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-start space-x-3 flex-1 min-w-0">
           {/* Icon */}
-          <div className={cn('flex-shrink-0', statusColors.icon)}>
+          <div className={cn('shrink-0', statusColors.icon)}>
             <Icon className="w-5 h-5" />
           </div>
 
@@ -197,6 +206,14 @@ export const FileTransferProgress: React.FC<FileTransferProgressProps> = ({
               <p className="text-xs text-muted-foreground capitalize">
                 {direction}
               </p>
+              {method && (
+                <>
+                  <span className="text-xs text-muted-foreground">•</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full border border-white/10 bg-background/60 text-muted-foreground">
+                    {methodLabel}
+                  </span>
+                </>
+              )}
               <span className="text-xs text-muted-foreground">•</span>
               <p className={cn('text-xs font-medium capitalize', statusColors.text)}>
                 {status.replace('-', ' ')}
