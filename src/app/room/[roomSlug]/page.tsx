@@ -1348,6 +1348,22 @@ export default function RoomPage() {
                             className="h-7 w-7 p-0 hover:bg-primary/10 hover:text-primary"
                         />
                     </div>
+                  {qrUrls.length > 0 ? (
+                    <button
+                      type="button"
+                      onClick={() => setIsQrOpen(true)}
+                      className="col-span-1 flex items-center justify-center rounded-lg bg-white p-1 border border-white/5 hover:bg-white/90 hover:border-primary/30 transition-all active:scale-95 shadow-xs overflow-hidden h-full min-h-[44px]"
+                      aria-label="Show QR"
+                      title="Show QR Code"
+                    >
+                      <QRCode
+                        value={qrUrls[0]?.url || ''}
+                        size={100}
+                        style={{ height: "100%", width: "100%", maxWidth: "100%" }}
+                        viewBox={`0 0 256 256`}
+                      />
+                    </button>
+                  ) : (
                      <button
                         type="button"
                         onClick={() => setIsQrOpen(true)}
@@ -1356,6 +1372,7 @@ export default function RoomPage() {
                     >
                         <span className="text-xl">📱</span>
                     </button>
+                  )}
                 </div>
               </div>
             </CardContent>
