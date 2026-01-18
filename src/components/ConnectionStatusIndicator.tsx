@@ -168,7 +168,7 @@ export const ConnectionStatusIndicator: React.FC<ConnectionStatusIndicatorProps>
   return (
     <motion.div
       className={cn(
-        'inline-flex items-center rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-sm',
+        'inline-flex items-center rounded-full border border-border bg-card shadow-sm',
         sizeStyles.container,
         canReconnect && 'pr-2',
         className

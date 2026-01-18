@@ -63,7 +63,7 @@ export function RoomCreationForm({ isLoading: externalLoading }: RoomCreationFor
   if (externalLoading) return <RoomCreationFormSkeleton />;
 
   return (
-    <Card className="w-full max-w-xl mx-auto overflow-visible ring-1 ring-white/20 dark:ring-white/5 shadow-2xl bg-white/50 dark:bg-black/40 backdrop-blur-xl">
+    <Card className="w-full max-w-xl mx-auto overflow-visible ring-1 ring-border/20 shadow-2xl bg-card/50 backdrop-blur-xl">
       <CardHeader className="text-center pb-8 pt-10">
         <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
             <SparklesIcon className="h-6 w-6 text-primary" />

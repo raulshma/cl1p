@@ -109,11 +109,11 @@ export const toast = {
                   action.onClick();
                   toastFn.dismiss();
                 }}
-                className={`px-3 py-1 rounded text-sm ${
-                  action.primary
-                    ? 'bg-white text-current font-semibold'
-                    : 'bg-white/20 hover:bg-white/30'
-                }`}
+                  className={`px-3 py-1 rounded text-sm ${
+                    action.primary
+                      ? 'bg-primary text-primary-foreground font-semibold hover:bg-primary/90'
+                      : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                  }`}
               >
                 {action.label}
               </button>

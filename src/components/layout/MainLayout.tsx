@@ -16,7 +16,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       <Header />
 
       {/* Main Content Area - Padding top accommodates the floating header */}
-      <main id="main-content" className="flex-1 pt-32 pb-16 animate-in-up" tabIndex={-1}>
+      <main id="main-content" className="flex-1 pt-16 pb-16" tabIndex={-1}>
         <div className="container mx-auto px-4 md:px-6 max-w-7xl">
           {children}
         </div>

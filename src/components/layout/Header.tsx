@@ -11,7 +11,7 @@ export function Header() {
 
   return (
     <header className="fixed top-6 left-0 right-0 z-50 flex justify-center pointer-events-none px-4">
-      <div className="glass-panel rounded-full px-2 pr-4 sm:px-3 sm:pr-6 py-2 flex items-center justify-between gap-4 pointer-events-auto transition-transform hover:scale-[1.02] duration-300 w-full max-w-2xl shadow-2xl shadow-black/5 ring-1 ring-white/20 dark:ring-white/10">
+      <div className="glass-panel rounded-full px-2 pr-4 sm:px-3 sm:pr-6 py-2 flex items-center justify-between gap-4 pointer-events-auto transition-transform hover:scale-[1.02] duration-300 w-full max-w-2xl shadow-2xl shadow-black/5 ring-1 ring-border/50">
         
         {/* Logo Section */}
         <div className="flex items-center gap-3">
@@ -30,7 +30,7 @@ export function Header() {
             variant="ghost"
             size="icon"
             onClick={openKeyboardShortcuts}
-            className="rounded-full hover:bg-black/5 dark:hover:bg-white/10 h-9 w-9"
+            className="rounded-full hover:bg-accent h-9 w-9"
           >
             <QuestionMarkCircleIcon className="h-5 w-5" />
           </Button>

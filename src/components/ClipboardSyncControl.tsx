@@ -144,7 +144,7 @@ export function ClipboardSyncControl({ className = '' }: ClipboardSyncControlPro
             role="switch"
             aria-checked={syncEnabled}
           >
-            <span className={cn("absolute top-1 left-1 bg-white dark:bg-black h-6 w-6 rounded-full shadow-md transition-transform duration-300", syncEnabled ? "translate-x-6" : "translate-x-0")} />
+            <span className={cn("absolute top-1 left-1 bg-background h-6 w-6 rounded-full shadow-md transition-transform duration-300", syncEnabled ? "translate-x-6" : "translate-x-0")} />
           </button>
         </div>
 
@@ -192,7 +192,7 @@ export function ClipboardSyncControl({ className = '' }: ClipboardSyncControlPro
             <h4 className="text-sm font-semibold text-muted-foreground ml-1">Recent Activity</h4>
             <div className="space-y-2">
               {items.slice(0, 3).map((item) => (
-                <div key={item.id} className="glass-panel p-3 rounded-xl text-sm flex items-center justify-between group hover:bg-white/5 transition-colors">
+                <div key={item.id} className="glass-panel p-3 rounded-xl text-sm flex items-center justify-between group hover:bg-accent transition-colors">
                   <span className="truncate max-w-[70%] opacity-80 group-hover:opacity-100">{item.content}</span>
                   <span className="text-[10px] text-muted-foreground bg-muted px-2 py-1 rounded-full">{new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute:'2-digit' })}</span>
                 </div>

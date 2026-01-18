@@ -17,7 +17,7 @@ import {
   SidebarTrigger,
   SidebarRail,
 } from '@/components/ui/sidebar';
-import { useIsMobile } from '@/hooks/use-mobile';
+
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
 
@@ -30,7 +30,7 @@ export default function Home() {
   const router = useRouter();
   const [joinRoomId, setJoinRoomId] = React.useState('');
   const { currentRoom } = useRoomStore();
-  const isMobile = useIsMobile();
+
 
   React.useEffect(() => {
     if (currentRoom?.id) {
@@ -62,7 +62,7 @@ export default function Home() {
         <SidebarRail />
       </Sidebar>
 
-      <SidebarInset>
+      <SidebarInset className="bg-transparent transition-all duration-200 ease-linear md:peer-data-[state=expanded]:pl-[var(--sidebar-width)] md:peer-data-[state=collapsed]:pl-[var(--sidebar-width-icon)]">
         <div className="relative min-h-screen w-full overflow-hidden flex flex-col items-center justify-center p-6 md:p-12">
           
           <div className="fixed top-4 left-4 z-50 md:hidden">
@@ -112,7 +112,7 @@ export default function Home() {
                 transition={{ delay: 0.5 }}
                 className="flex flex-col gap-4 max-w-sm mx-auto md:mx-0"
               >
-                 <div className="p-6 rounded-3xl bg-secondary/30 border border-white/5 backdrop-blur-md shadow-sm">
+                 <div className="p-6 rounded-3xl bg-secondary/30 border border-border/50 backdrop-blur-md shadow-sm">
                     <div className="flex items-center gap-3 mb-3">
                         <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
                         <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Quick Join</span>

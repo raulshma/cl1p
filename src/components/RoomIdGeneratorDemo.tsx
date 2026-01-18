@@ -19,7 +19,7 @@ export function RoomIdGeneratorDemo() {
   };
 
   return (
-    <div className="p-6 bg-white rounded-lg shadow space-y-4">
+    <div className="p-6 bg-card border border-border rounded-lg shadow space-y-4">
       <h2 className="text-2xl font-bold">Room ID Generator Demo</h2>
 
       <div className="space-y-2">
