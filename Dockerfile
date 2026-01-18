@@ -53,7 +53,7 @@ ENV NGINX_PORT=8080
 ENV UPSTREAM_PORT=3000
 ENV NGINX_CLIENT_MAX_BODY_SIZE=6g
 
-RUN apk add --no-cache nginx gettext su-exec openssl \
+RUN apk add --no-cache nginx gettext su-exec openssl dos2unix \
 	&& addgroup -S nodejs \
 	&& adduser -S nextjs -G nodejs
 
@@ -66,7 +66,7 @@ COPY docker/nginx.conf.ssl.template /etc/nginx/nginx.conf.ssl.template
 COPY docker/runtime-env.template.js /app/runtime-env.template.js
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 
-RUN chmod +x /usr/local/bin/entrypoint.sh
+RUN dos2unix /usr/local/bin/entrypoint.sh && chmod +x /usr/local/bin/entrypoint.sh
 
 EXPOSE 8080 8443
 
